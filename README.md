@@ -29,14 +29,21 @@ Prognosis_R/
 
 **⚠️ Action Required:** Raw data is **NOT** included in this repository. To reproduce the analysis, please create a folder named `Data_Source` in the root directory and download the required datasets.
 
-| File Category | Required Filename / Data | Source / Database |
+| File Category | Required Filename (Must be Exact) | Source / Database |
 | :--- | :--- | :--- |
 | **eRNA Expr** | `TCGA_RPKM_eRNA_300k_peaks_in_Super_enhancer_BRCA.csv` | **TCeA** (The Cancer eRNA Atlas) |
 | **mRNA Expr** | `TCGA-BRCA.star_fpkm.tsv.gz` | **UCSC Xena** (TCGA-BRCA) |
-| **Clinical** | `TCGA-BRCA.clinical.tsv` & `clinical_info.tsv` | **UCSC Xena** |
-| **Multi-omics** | Mutation, CNV, Methylation, and Hi-C loop data | **UCSC Xena / ENCODE** |
-| **Normal Ref** | GTEx breast tissue expression profile | **GTEx Portal** (For Script 8) |
-| **Drug Data** | `L1000_Result.csv` (Place in `Results/Drug_Analysis/`) | **L1000FWD Web Tool** (Generated via Script 6) |
+| **Clinical** | `TCGA-BRCA.clinical.tsv` | **UCSC Xena** (Phenotype data) |
+| **Clinical** | `clinical_info.tsv` | **UCSC Xena** (Survival data) |
+| **Mutation** | `PCAWG_WGS_mutations.tsv.gz` | **UCSC Xena** |
+| **CNV** | `TCGA.BRCA.sampleMap_Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes.gz` | **UCSC Xena** (Gistic2) |
+| **Methylation** | `TCGA.BRCA.sampleMap_HumanMethylation450.gz` | **UCSC Xena** (450k Array) |
+| **Annotation** | `probeMap_illuminaMethyl450_hg19_GPL16304_TCGAlegacy` | **UCSC Xena** (Platform Map) |
+| **Hi-C** | `loop_info.csv` | **GEO(GSE157381)** |
+| **Reference** | `hg19ToHg38.over.chain.gz` | **UCSC Genome Browser** |
+| **Reference** | `gencode.v36.annotation.gtf.gene.probemap` | **UCSC Xena** |
+| **Normal Ref** | GTEx breast tissue expression profile | **GTEx Portal** |
+| **Drug Data** | `L1000_Result.csv` (Place in `Results/Drug_Analysis/`) | **L1000FWD Web Tool** |
 
 > **Note:** If you are a member of Southeast University, you can access the pre-compiled data via `pan.seu.edu.cn`. For inquiries, please contact 213230182@seu.edu.cn.
 
