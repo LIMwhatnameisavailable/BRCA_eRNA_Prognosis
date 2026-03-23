@@ -282,7 +282,6 @@ if (nrow(sig_gsea) > 0) {
          width = 18, height = 9)
   
   
-  
   # 多通路富集图
   high_risk_ids <- filter(sig_gsea, NES > 0) %>%
     arrange(desc(NES)) %>%
