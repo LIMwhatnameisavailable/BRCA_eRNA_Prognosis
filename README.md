@@ -68,11 +68,11 @@ Prognosis_R/
 ### Part III: Clinical Translation & Therapeutics
 * **Script 6:** `6_Candidate_Drug&Immune_Analysis.R`
   * **Function:** Conducts a comprehensive pharmacogenomic and immunological analysis to identify therapeutic vulnerabilities in high-risk patients. Key executions include:
-    * **Signature Reversal (L1000FWD):** Extracts top DEGs for web-based screening and visualizes small-molecule compounds capable of reversing the high-risk transcriptional state.
-    * **Standard Therapy Resistance:** Evaluates GDSC-predicted IC50 values to demonstrate high-risk patient resistance to standard chemotherapies (e.g., Paclitaxel, Cisplatin).
-    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key breast cancer-related genes (e.g., GATA3, ESR1, BRCA1).
-    * **Immune & Targeted Therapy:** Compares immune checkpoint expression (e.g., CD274, PDCD1) across risk groups and identifies novel targeted drugs that high-risk patients are uniquely sensitive to.
-    * **Therapeutics Summary:** Automatically generates a consolidated table of top candidate drugs from both L1000FWD and GDSC predictions.
+    * **Signature Reversal (L1000FWD):** Extracts DEGs for web-based screening and visualizes compounds capable of reversing the high-risk transcriptional state.
+    * **Standard Therapy Resistance:** Evaluates GDSC-predicted IC50 values to demonstrate high-risk patient resistance to standard chemotherapies.
+    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key breast cancer-related genes.
+    * **Immune & Targeted Therapy:** Compares immune checkpoint expression across risk groups and identifies targeted drugs.
+    * **Therapeutics Summary:** Automatically generates a consolidated table of top candidate drugs.
 
 ### Part IV: Early-Stage Discrimination & Quality Control
 * **Script 7:** `7_PCA_mRNA_with_eRNA_Tumor&Normal.R`
