@@ -312,7 +312,7 @@ if(file.exists(lincs_file)){
     ) %>%
     dplyr::select(Candidate_Drug, Screening_Approach, Key_Metric, Mechanism_of_Action_Target)
 } else {
-  stop("❌ 未找到 L1000_Result.csv 文件！")
+  stop(" 未找到 L1000_Result.csv 文件！")
 }
 
 
