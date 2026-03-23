@@ -68,9 +68,9 @@ Prognosis_R/
 ### Part III: Clinical Translation & Therapeutics
 * **Script 6:** `6_Candidate_Drug&Immune_Analysis.R`
   * **Function:** Conducts a comprehensive pharmacogenomic and immunological analysis to identify therapeutic vulnerabilities in high-risk patients. Key executions include:
-    * **Signature Reversal (L1000FWD):** Extracts DEGs for web-based screening and visualizes compounds capable of reversing the high-risk transcriptional state.
-    * **Standard Therapy Resistance:** Evaluates GDSC-predicted IC50 values to demonstrate high-risk patient resistance to standard chemotherapies.
-    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key breast cancer-related genes.
+    * **Signature Reversal:** Extracts DEGs for web-based screening and visualizes compounds capable of reversing the high-risk transcriptional state.
+    * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values to demonstrate high-risk patient resistance to standard chemotherapies.
+    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key genes.
     * **Immune & Targeted Therapy:** Compares immune checkpoint expression across risk groups and identifies targeted drugs.
     * **Therapeutics Summary:** Automatically generates a consolidated table of top candidate drugs.
 
