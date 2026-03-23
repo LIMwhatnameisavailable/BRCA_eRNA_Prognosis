@@ -379,33 +379,44 @@ if (nrow(high_risk_top_pathway) > 0) {
   pathway_id <- high_risk_top_pathway$ID
   pathway_name <- high_risk_top_pathway$Description
   cat("\n正在为高风险组Top通路生成热图:", pathway_name, "\n")
+  
   core_genes_entrez <- sig_gsea$core_enrichment[sig_gsea$ID == pathway_id] %>% strsplit("/") %>% unlist()
   core_genes_symbol <- bitr(core_genes_entrez, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)$SYMBOL
-  heatmap_data <- expr_filtered[rownames(expr_filtered) %in% core_genes_symbol, ]
-
+  
+  if(length(core_genes_symbol) > 25) {
+    core_genes_symbol <- core_genes_symbol[1:25]
+  }
+  heatmap_data <- as.matrix(expr_filtered[rownames(expr_filtered) %in% core_genes_symbol, ])
+  
   if(nrow(heatmap_data) > 1) {
-    annotation_col <- data.frame(RiskGroup = risk_filtered$risk_group)
-    rownames(annotation_col) <- risk_filtered$sample_id
+    risk_filtered_sorted <- risk_filtered[order(risk_filtered$risk_score), ]
+    heatmap_data <- heatmap_data[, risk_filtered_sorted$sample_id]
+    
+    annotation_col <- data.frame(RiskGroup = risk_filtered_sorted$risk_group)
+    rownames(annotation_col) <- risk_filtered_sorted$sample_id
     risk_colors <- list(RiskGroup = c("Low" = "#1F77B4", "High" = "#D62728"))
-    heatmap_colors <- colorRampPalette(c("#D62728", "white", "#1F77B4"))(100) 
-    svglite("Results/Fig_GSEA_Heatmap_HighRisk.svg", width = 12, height = 10)
-    pheatmap::pheatmap(
+    heatmap_colors <- colorRampPalette(c("#1F77B4", "white", "#D62728"))(100) 
+    
+    pdf("Results/Fig_GSEA_Heatmap_HighRisk.pdf", width = 8, height = 6)
+    p <- ComplexHeatmap::pheatmap(
       heatmap_data,
       scale = "row",
       color = heatmap_colors,
       annotation_col = annotation_col,
       annotation_colors = risk_colors,
       cluster_rows = TRUE,
-      cluster_cols = TRUE,
+      cluster_cols = FALSE,
       show_colnames = FALSE,
       show_rownames = TRUE,
-      fontsize_row = 8,
-      breaks = seq(-5, 5, length.out = 101),
-      main = pathway_name
+      fontsize_row = 10,
+      breaks = seq(-2, 2, length.out = 101), 
+      main = pathway_name,
+      border_color = NA,
+      use_raster = TRUE,
+      raster_quality = 5
     )
+    print(p) 
     dev.off()
-  } else {
-    cat("警告: '", pathway_name, "' 通路的热图数据行数不足 (", nrow(heatmap_data), " 行)，已跳过绘图。\n")
   }
 }
 
@@ -417,30 +428,40 @@ if (nrow(low_risk_top_pathway) > 0) {
   cat("\n正在为低风险组Top通路生成热图:", pathway_name, "\n")
   core_genes_entrez <- sig_gsea$core_enrichment[sig_gsea$ID == pathway_id] %>% strsplit("/") %>% unlist()
   core_genes_symbol <- bitr(core_genes_entrez, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)$SYMBOL
-  heatmap_data <- expr_filtered[rownames(expr_filtered) %in% core_genes_symbol, ]
-  gene_fontsize <- if (length(core_genes_symbol) > 100) 6 else 8
+  
+  if(length(core_genes_symbol) > 25) {
+    core_genes_symbol <- core_genes_symbol[1:25]
+  }
+  heatmap_data <- as.matrix(expr_filtered[rownames(expr_filtered) %in% core_genes_symbol, ])
+  
   if(nrow(heatmap_data) > 1) {
-    annotation_col <- data.frame(RiskGroup = risk_filtered$risk_group)
-    rownames(annotation_col) <- risk_filtered$sample_id
+    risk_filtered_sorted <- risk_filtered[order(risk_filtered$risk_score), ]
+    heatmap_data <- heatmap_data[, risk_filtered_sorted$sample_id]
+    
+    annotation_col <- data.frame(RiskGroup = risk_filtered_sorted$risk_group)
+    rownames(annotation_col) <- risk_filtered_sorted$sample_id
     risk_colors <- list(RiskGroup = c("Low" = "#1F77B4", "High" = "#D62728"))
-    heatmap_colors <- colorRampPalette(c("#D62728", "white", "#1F77B4"))(100)
-    svglite("Results/Fig_GSEA_Heatmap_LowRisk.svg", width = 12, height = 10)
-    pheatmap::pheatmap(
+    heatmap_colors <- colorRampPalette(c("#1F77B4", "white", "#D62728"))(100)
+    
+    pdf("Results/Fig_GSEA_Heatmap_LowRisk.pdf", width = 8, height = 6)
+    p <- ComplexHeatmap::pheatmap(
       heatmap_data,
       scale = "row",
       color = heatmap_colors,
       annotation_col = annotation_col,
       annotation_colors = risk_colors,
       cluster_rows = TRUE,
-      cluster_cols = TRUE,
+      cluster_cols = FALSE,
       show_colnames = FALSE,
       show_rownames = TRUE,
-      fontsize_row = gene_fontsize,
-      breaks = seq(-5, 5, length.out = 101),
-      main = pathway_name
+      fontsize_row = 10,
+      breaks = seq(-2, 2, length.out = 101), 
+      main = pathway_name,
+      border_color = NA,
+      use_raster = TRUE,
+      raster_quality = 5
     )
+    print(p)
     dev.off()
-  } else {
-    cat("警告: '", pathway_name, "' 通路的热图数据行数不足 (", nrow(heatmap_data), " 行)，已跳过绘图。\n")
   }
 }
