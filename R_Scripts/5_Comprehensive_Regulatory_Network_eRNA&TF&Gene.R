@@ -839,6 +839,29 @@ cytoscape_nodes <- nodes_df %>%
       TRUE ~ 30
     )
   )
+nodes_df$type[nodes_df$name == "EGR3"] <- "TF"
+cytoscape_nodes <- nodes_df %>%
+  dplyr::rename(ID = name, NodeType = type) %>%
+  dplyr::mutate(
+    node_shape = case_when(
+      NodeType == "TF" ~ "DIAMOND",      
+      NodeType == "eRNA" ~ "HEXAGON",    
+      NodeType == "Gene" ~ "ELLIPSE",    
+      TRUE ~ "ELLIPSE"
+    ),
+    node_fill_color = case_when(
+      NodeType == "TF" ~ "#4DAF4A",     
+      NodeType == "eRNA" ~ "#FF7F00",   
+      NodeType == "Gene" ~ "#984EA3",   
+      TRUE ~ "#CCCCCC"
+    ),
+    node_size = case_when(
+      NodeType == "TF" ~ 50,
+      NodeType == "eRNA" ~ 60,
+      NodeType == "Gene" ~ 30,
+      TRUE ~ 30
+    )
+  )
 
 # 导出
 out_dir <- getwd()
