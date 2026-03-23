@@ -2,12 +2,9 @@ library(data.table)
 library(ggplot2)
 library(gridExtra)
 library(dplyr)
-if (!requireNamespace("ggsci", quietly = TRUE)) install.packages("ggsci")
 library(ggsci)
 
-# ==============================================================================
-#                          PART 1: 数据读取与变量恢复 
-# ==============================================================================
+# 数据读取
 eRNA_df <- fread("Data_Source/TCGA_RPKM_eRNA_300k_peaks_in_Super_enhancer_BRCA.csv", data.table = FALSE)
 rownames(eRNA_df) <- eRNA_df[,1]; eRNA_df <- eRNA_df[,-1]
 
@@ -43,10 +40,7 @@ cat("   - 样本数:", length(final_group), "\n")
 cat("   - Normal:", sum(final_group == "Normal"), "\n")
 cat("   - Tumor: ", sum(final_group == "Tumor"), "\n")
 
-# ==============================================================================
-#                             PART 2: 绘图函数 
-# ==============================================================================
-
+# 绘图函数 
 run_pca_plot <- function(expr_mat, group_vec, title_text) {
   # 数据计算
   expr_mat <- log2(as.matrix(expr_mat) + 1)
@@ -87,13 +81,11 @@ run_pca_plot <- function(expr_mat, group_vec, title_text) {
   return(p)
 }
 
-# ==============================================================================
-#                           PART 3: 生成图片
-# ==============================================================================
+# 生成图片
 p_eRNA <- run_pca_plot(final_eRNA, final_group, "eRNA (Normal vs Tumor)")
 p_mRNA <- run_pca_plot(final_mRNA, final_group, "mRNA (Normal vs Tumor)")
 
 combined_plot <- grid.arrange(p_mRNA, p_eRNA, ncol = 2)
 
 ggsave("Results/Fig_PCA_mRNA&eRNA.svg", combined_plot, width = 12, height = 6, device = "svg")
-cat("✅ 图片已保存为: Fig_PCA_mRNA&eRNA.svg")
+cat(" 图片已保存为: Fig_PCA_mRNA&eRNA.svg")
