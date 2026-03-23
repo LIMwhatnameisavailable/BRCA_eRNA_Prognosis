@@ -23,7 +23,6 @@ write.table(down_genes_list, "Results/Drug_Analysis/DOWN_GENES_FOR_WEB.txt",
             quote = FALSE, row.names = FALSE, col.names = FALSE)
 # 将网站下载的文件重命名为 'L1000_Result.csv'放入 'Results/Drug_Analysis/' 文件夹
 
-
 library(ggplot2)
 library(ggpubr)
 library(patchwork)
@@ -77,7 +76,6 @@ if(file.exists(lincs_file)){
 }
 ggsave("Results/Drug_Analysis/FigA.pdf", p_a, width = 4, height = 8)
 ggsave("Results/Drug_Analysis/FigA.svg", p_a, width = 4, height = 8)
-
 
 
 # 耐药药物
@@ -137,7 +135,7 @@ ggsave("Results/Drug_Analysis/FigB.pdf", p_b, width = 8, height = 8)
 ggsave("Results/Drug_Analysis/FigB.svg", p_b, width = 8, height = 8)
 
 
-# 分子机制 (19个基因相关性棒棒糖图) - 风格融合版
+# 分子机制 (19个基因相关性棒棒糖图) 
 target_genes_c <- c("GATA3", "XBP1", "AR", "FOXA1", "PGR","ESR1", 
                     "BRCA1", "E2F2", "FOSL1", "E2F8", "POU5F1", 
                     "E2F4", "RUNX1", "SNAI2", "CCND1", "TWIST2", 
@@ -151,7 +149,7 @@ if(length(found_resist_drugs) >= 5){
 }
 ref_drug_clean <- strsplit(ref_drug, "_")[[1]][1]
 
-# 2. 计算相关性
+# 计算相关性
 cor_list <- list()
 for(g in target_genes_c){
   if(g %in% rownames(expr_sub)){
@@ -198,7 +196,6 @@ ggsave("Results/Drug_Analysis/FigC.pdf", p_c, width = 4.5, height = 8)
 ggsave("Results/Drug_Analysis/FigC.svg", p_c, width = 4.5, height = 8)
 
 
-
 # 免疫小提琴图
 my_colors_deep <- c("Low" = "#457B9D", "High" = "#E63946")
 my_colors_light <- c("Low" = "#A2D2FF", "High" = "#FFA8A8")
@@ -210,7 +207,7 @@ df_imm <- expr_sub[imm_genes, ] %>% t() %>% as.data.frame() %>%
   pivot_longer(cols = -risk_group, names_to = "ID", values_to = "Value") %>%
   mutate(Type = "Immune")
 
-# 设置因子水平星
+# 设置因子水平
 df_imm$ID <- factor(df_imm$ID, levels = imm_genes)
 
 # 准备数据：敏感药物
@@ -279,12 +276,10 @@ p_sens_box <- ggplot(df_sens, aes(x=risk_group, y=Value, fill=risk_group)) +
     axis.line = element_line(size = 0.4)
   )
 
-
 p_d_final <- p_imm_violin / p_sens_box + 
   plot_annotation(tag_levels = 'A') 
 ggsave("Results/Drug_Analysis/FigD.pdf", p_d_final, width = 8, height = 8)
 ggsave("Results/Drug_Analysis/FigD.svg", p_d_final, width = 8, height = 8)
-
 
 # 生成汇总表格
 if(!dir.exists("Results/Drug_Analysis")) dir.create("Results/Drug_Analysis", recursive = TRUE)
@@ -314,7 +309,6 @@ if(file.exists(lincs_file)){
 } else {
   stop(" 未找到 L1000_Result.csv 文件！")
 }
-
 
 # 提取 GDSC Top 8 高风险敏感药物
 common_samples <- intersect(risk_data$sample_id, substr(rownames(pred_ic50), 1, 12))
