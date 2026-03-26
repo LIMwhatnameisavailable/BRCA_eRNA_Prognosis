@@ -404,3 +404,118 @@ ggsave(
   width = 7,  
   height = 8, 
 )
+
+            
+# 绘制临床信息分组统计表 (Table 1)
+library(gtsummary)
+library(flextable)
+library(forcats) #
+
+# 获取 1073 个目标样本的 ID
+train_patients <- overlap.samples
+test_patients <- overlap_test.samples
+
+# 处理临床数据并去重
+clinical_df <- clinical
+clinical_df$Patient_ID <- substr(rownames(clinical_df), 1, 12)
+clinical_df <- clinical_df[!duplicated(clinical_df$Patient_ID), ]
+
+# 筛选出这 1073 个样本并打上标签
+clinical_filtered <- clinical_df[clinical_df$Patient_ID %in% c(train_patients, test_patients), ]
+clinical_filtered$Cohort <- ifelse(clinical_filtered$Patient_ID %in% train_patients, 
+                                   "Training Cohort", 
+                                   "Testing Cohort")
+
+clinical_ready <- clinical_filtered %>%
+  select(
+    Cohort,
+    Age = age_at_index.demographic,                   
+    Stage = ajcc_pathologic_stage.diagnoses,          
+    T_classification = ajcc_pathologic_t.diagnoses,   
+    N_classification = ajcc_pathologic_n.diagnoses,   
+    M_classification = ajcc_pathologic_m.diagnoses,
+    Primary_diagnosis = primary_diagnosis.diagnoses
+  ) %>%
+  mutate(
+    Age = as.numeric(Age),
+    
+    # 精准清洗 Stage，保留 Stage X，真正的空值设为 NA
+    Stage = case_when(
+      Stage %in% c("Stage I", "Stage IA", "Stage IB") ~ "Stage I",
+      Stage %in% c("Stage II", "Stage IIA", "Stage IIB") ~ "Stage II",
+      Stage %in% c("Stage III", "Stage IIIA", "Stage IIIB", "Stage IIIC") ~ "Stage III",
+      Stage %in% c("Stage IV") ~ "Stage IV",
+      Stage == "Stage X" ~ "Stage X",
+      TRUE ~ NA_character_ # 其余空字符串全部变为 NA，后续会被隐藏
+    ),
+    
+    # 精准清洗 T 分期，保留 TX
+    T_classification = case_when(
+      T_classification %in% c("T1", "T1a", "T1b", "T1c") ~ "T1",
+      T_classification %in% c("T2", "T2a", "T2b") ~ "T2",
+      T_classification %in% c("T3", "T3a") ~ "T3",
+      T_classification %in% c("T4", "T4b", "T4d") ~ "T4",
+      T_classification == "TX" ~ "TX",
+      TRUE ~ NA_character_
+    ),
+    
+    # 精准清洗 N 分期，保留 NX
+    N_classification = case_when(
+      N_classification %in% c("N0", "N0 (i-)", "N0 (i+)", "N0 (mol+)") ~ "N0",
+      N_classification %in% c("N1", "N1a", "N1b", "N1c", "N1mi") ~ "N1",
+      N_classification %in% c("N2", "N2a") ~ "N2",
+      N_classification %in% c("N3", "N3a", "N3b", "N3c") ~ "N3",
+      N_classification == "NX" ~ "NX",
+      TRUE ~ NA_character_
+    ),
+    
+    # 精准清洗 M 分期，保留 MX
+    M_classification = case_when(
+      M_classification %in% c("M0", "cM0 (i+)") ~ "M0",
+      M_classification %in% c("M1") ~ "M1",
+      M_classification == "MX" ~ "MX",
+      TRUE ~ NA_character_
+    ),
+    
+    # 处理 Primary diagnosis：把空字符串变 NA
+    Primary_diagnosis = na_if(Primary_diagnosis, "")
+  ) %>%
+  mutate(
+    # 转换为因子，fct_drop 会自动删掉所有计数为 0 的分类（不留空行）
+    Stage = fct_drop(factor(Stage, levels = c("Stage I", "Stage II", "Stage III", "Stage IV", "Stage X"))),
+    T_classification = fct_drop(factor(T_classification, levels = c("T1", "T2", "T3", "T4", "TX"))),
+    N_classification = fct_drop(factor(N_classification, levels = c("N0", "N1", "N2", "N3", "NX"))),
+    M_classification = fct_drop(factor(M_classification, levels = c("M0", "M1", "MX"))),
+  
+    Primary_diagnosis = fct_lump_n(Primary_diagnosis, n = 3, other_level = "Other")
+  )
+
+# 生成 Table 1
+theme_gtsummary_journal(journal = "jama")
+
+table1 <- clinical_ready %>%
+  tbl_summary(
+    by = Cohort, 
+    statistic = list(
+      all_continuous() ~ "{median} ({min}-{max})", 
+      all_categorical() ~ "{n}"                    
+    ),
+    missing = "no" 
+  ) %>%
+  add_overall(col_label = "**Combined Cohort**\n(n = {N})") %>% 
+  add_p( 
+    test = list(
+      all_continuous() ~ "wilcox.test", 
+      all_categorical() ~ "chisq.test"  
+    )
+  ) %>% 
+  modify_header(label ~ "**Variables**") %>% 
+  bold_labels() 
+
+# 打印预览
+print(table1)
+
+# 导出为 Word 文档
+table1 %>% 
+  as_flex_table() %>% 
+  flextable::save_as_docx(path = "Results/Table1_Clinical_Characteristics.docx")
