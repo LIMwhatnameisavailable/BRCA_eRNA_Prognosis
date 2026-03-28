@@ -118,3 +118,33 @@ if(sum(cox_test_data$OS==1) >= 10) {
   cat("警告：测试集死亡事件过少，多因素回归结果可能不可靠或报错。\n")
 }
 
+
+cat("\n\n========== 提取 Shiny 部署所需的核心参数 ==========\n")
+# 1. 在训练集上拟合最终的多因素 Cox 模型
+final_cox_model <- coxph(
+  Surv(OS.time_month, OS) ~ age + T_stage_num + N_stage_num + M_stage_num + risk_group, 
+  data = cox_train_data
+)
+
+# 2. 打印 Beta 系数 (用于计算 Linear Predictor)
+cat("\n[1] Beta 系数 (Coefficients):\n")
+print(coef(final_cox_model))
+
+# 3. 打印变量均值 (用于对新患者数据进行中心化)
+cat("\n[2] 变量均值 (Means for centering):\n")
+print(final_cox_model$means)
+
+# 4. 提取 1年(12个月)、3年(36个月)、5年(60个月) 的基线生存率 S0(t)
+cat("\n[3] 特定时间点的基线生存率 S0(t):\n")
+bh <- basehaz(final_cox_model, centered = TRUE)
+target_times <- c(12, 36, 60) # 假设 OS.time_month 的单位是月
+
+for(t in target_times) {
+  # 寻找最接近目标时间的点
+  closest_idx <- which.min(abs(bh$time - t))
+  closest_time <- bh$time[closest_idx]
+  cumulative_hazard <- bh$hazard[closest_idx]
+  s0_t <- exp(-cumulative_hazard) # 基线生存率 = exp(-累积风险)
+  
+  cat(sprintf("目标时间 %d 个月 (实际匹配 %.1f 个月): 累积风险 H0 = %.5f, 基线生存率 S0 = %.5f\n", 
+              t, closest_time, cumulative_hazard, s0_t))
