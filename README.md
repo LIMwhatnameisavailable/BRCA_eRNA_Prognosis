@@ -41,7 +41,7 @@ Prognosis_R/
 | **Annotation** | `probeMap_illuminaMethyl450_hg19_GPL16304_TCGAlegacy` | **UCSC Xena** (Platform Map) |
 | **Hi-C** | `loop_info.csv` | **GEO(GSE157381)** |
 | **Reference** | `hg19ToHg38.over.chain.gz` | **UCSC Genome Browser** |
-| **Reference** | `gencode.v36.annotation.gtf.gene.probemap` | **UCSC Xena** |
+| **Reference** | `gencode.v36.annotation.gtf.gene.probemap` | **UCSC Xena** (TCGA TARGET GTEx)|
 | **Normal Ref** | `TcgaTargetGtex_rsem_gene_tpm.tsv` | **UCSC Xena** |
 | **Drug Data** | `L1000_Result.csv` (Place in `Results/Drug_Analysis/`) | **L1000FWD Web Tool** |
 
