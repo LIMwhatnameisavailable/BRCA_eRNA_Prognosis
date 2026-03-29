@@ -41,8 +41,9 @@ Prognosis_R/
 | **Annotation** | `probeMap_illuminaMethyl450_hg19_GPL16304_TCGAlegacy` | **UCSC Xena** (Platform Map) |
 | **Hi-C** | `loop_info.csv` | **GEO(GSE157381)** |
 | **Reference** | `hg19ToHg38.over.chain.gz` | **UCSC Genome Browser** |
-| **Reference** | `gencode.v36.annotation.gtf.gene.probemap` | **UCSC Xena** (TCGA TARGET GTEx)|
-| **Normal Ref** | `TcgaTargetGtex_rsem_gene_tpm.tsv` | **UCSC Xena** |
+| **Reference** | `gencode.v36.annotation.gtf.gene.probemap` | **UCSC Xena** |
+| **Harmonized Expression Matrix** | `TcgaTargetGtex_rsem_gene_tpm.tsv` | **UCSC Xena** (TCGA TARGET GTEx)|
+| **Clinical / Phenotype Data** | `TcgaTargetGTEX_phenotype.txt` | **UCSC Xena** (TCGA TARGET GTEx)|
 | **Drug Data** | `L1000_Result.csv` (Place in `Results/Drug_Analysis/`) | **L1000FWD Web Tool** |
 
 > **Note:** If you are a member of Southeast University, you can access the pre-compiled data via `pan.seu.edu.cn`. For inquiries, please contact 213230182@seu.edu.cn.
