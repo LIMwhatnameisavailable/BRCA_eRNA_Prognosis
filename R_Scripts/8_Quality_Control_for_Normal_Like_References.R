@@ -1,25 +1,87 @@
-library(ggplot2)
-library(ggpubr)
-library(dplyr)
 library(data.table)
+library(dplyr)      
+library(ggplot2)    
+library(ggpubr)     
+library(tibble)     
 
+# 设置随机种子
+set.seed(42) 
+
+# 确保输出目录存在
 if(!dir.exists("Results_QC")) dir.create("Results_QC")
 
+# 全局路径与变量设置 
+# ------------------------------------------------------------------------------
+CANCER_CODE <- "BRCA"
+PRIMARY_SITE <- "Breast"
+
+TPM_DATA_PATH <- "D:/SEU/科研/国省创/数据集/TcgaTargetGtex_rsem_gene_tpm/TcgaTargetGtex_rsem_gene_tpm.tsv"
+METADATA_PATH <- "D:/SEU/科研/国省创/数据集/TcgaTargetGTEX_phenotype.txt/TcgaTargetGTEX_phenotype.txt"
+
+# ==============================================================================
+# 加载数据与预处理
+# ==============================================================================
+message(">>> 开始加载数据...")
+
+if (file.exists(METADATA_PATH)) {
+  phenotype <- fread(METADATA_PATH, data.table = FALSE)
+  message("  - 元数据加载完成。")
+} else {
+  stop("错误: 找不到元数据文件!")
+}
+
+# 读取表达矩阵
+if (file.exists(TPM_DATA_PATH)) {
+  expression_matrix <- fread(TPM_DATA_PATH, data.table = FALSE)
+  rownames(expression_matrix) <- expression_matrix[, 1]
+  expression_matrix <- expression_matrix[, -1] 
+  message("  - 表达矩阵加载完成。")
+} else {
+  stop("错误: 找不到表达矩阵文件!")
+}
+
+# ==============================================================================
+# 数据筛选与对齐
+# ==============================================================================
+message(paste0(">>> 正在筛选 ", CANCER_CODE, " 和 GTEx ", PRIMARY_SITE, " 样本..."))
+
+# 筛选元数据
+target_samples <- phenotype %>%
+  filter(`_primary_site` == PRIMARY_SITE) %>%
+  filter(
+    (`_sample_type` %in% c("Primary Tumor", "Solid Tissue Normal") & grepl("^TCGA", sample)) |
+      (grepl("^GTEX", sample))
+  )
+
+if (nrow(target_samples) == 0) stop("未找到符合条件的样本，请检查筛选条件。")
+
+# 3.2 数据对齐 (取交集)
+common_samples <- intersect(target_samples$sample, colnames(expression_matrix))
+message(paste0("  - 数据对齐完成。共找到 ", length(common_samples), " 个共有样本。"))
+
+# 提取对应的表达数据和元数据，并确保顺序一致
+expr_final <- expression_matrix[, common_samples]
+meta_final <- target_samples %>% 
+  filter(sample %in% common_samples) %>%
+  arrange(match(sample, common_samples)) 
+
+# ==============================================================================
+# 基于 Spearman 相关性的 Normal-like 样本筛选 
+# ==============================================================================
+message(">>> 正在构建 GTEx 标准参考谱并计算相关性...")
+
 gtex_samples <- meta_final$sample[grepl("^GTEX", meta_final$sample)]
-# 计算 GTEx 的平均表达量
 gtex_mean_profile <- rowMeans(expr_final[, gtex_samples], na.rm = TRUE)
 
+# 计算 TCGA 癌旁样本的相关性
 adj_samples <- meta_final$sample[meta_final$`_sample_type` == "Solid Tissue Normal"]
 adj_mat <- expr_final[, adj_samples]
-
-# 计算 Spearman 相关性
 cor_scores <- cor(adj_mat, gtex_mean_profile, method = "spearman", use = "pairwise.complete.obs")
 cor_df <- data.frame(sample = rownames(cor_scores), correlation = as.numeric(cor_scores))
 
+# 定义统计学阈值 (Mean - 2SD)
 mu <- mean(cor_df$correlation, na.rm = TRUE)
 sigma <- sd(cor_df$correlation, na.rm = TRUE)
-
-# 阈值定义平均值下浮 2 倍标准差
 cutoff_value <- mu - 2 * sigma 
 
 # 执行筛选
@@ -40,7 +102,13 @@ stats_msg <- paste0(
 )
 message(stats_msg)
 
+# 更新全局变量
 normal_like_samples <- meta_final %>% filter(sample %in% kept_ids)
+
+# ==============================================================================
+# 导出结果
+# ==============================================================================
+message(">>> 正在导出筛选结果...")
 
 export_df <- cor_df %>%
   filter(sample %in% kept_ids) %>%
@@ -55,6 +123,12 @@ write.table(kept_ids,
             file = paste0("Results_QC/Selected_Normal_Samples_ID_Only_", CANCER_CODE, ".txt"), 
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
+# ==============================================================================
+# 绘制验证图
+# ==============================================================================
+message(">>> 正在绘制验证图...")
+
+# 准备 Tumor 对比数据
 tumor_samples <- meta_final$sample[meta_final$`_sample_type` == "Primary Tumor"]
 
 if(length(tumor_samples) > 500) {
@@ -66,7 +140,7 @@ if(length(tumor_samples) > 500) {
 tumor_mat <- expr_final[, plot_tumor_ids]
 tumor_cor <- cor(tumor_mat, gtex_mean_profile, method = "spearman", use = "pairwise.complete.obs")
 
-# 合并所有绘图数据
+# 合并绘图数据
 plot_data <- rbind(
   data.frame(Group = "Selected Adjacent", Correlation = cor_df$correlation[cor_df$sample %in% kept_ids]),
   data.frame(Group = "Rejected Adjacent", Correlation = cor_df$correlation[cor_df$sample %in% rejected_ids]),
@@ -75,6 +149,7 @@ plot_data <- rbind(
 
 plot_data$Group <- factor(plot_data$Group, levels = c("Selected Adjacent", "Rejected Adjacent", "TCGA Tumor"))
 
+# 绘图
 box_colors <- c(
   "Selected Adjacent" = "#E9C46A", 
   "Rejected Adjacent" = "gray30",
