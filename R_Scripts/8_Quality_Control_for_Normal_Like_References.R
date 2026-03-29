@@ -7,7 +7,6 @@ library(tibble)
 # 设置随机种子
 set.seed(42) 
 
-# 确保输出目录存在
 if(!dir.exists("Results_QC")) dir.create("Results_QC")
 
 # 全局路径与变量设置 
@@ -15,8 +14,8 @@ if(!dir.exists("Results_QC")) dir.create("Results_QC")
 CANCER_CODE <- "BRCA"
 PRIMARY_SITE <- "Breast"
 
-TPM_DATA_PATH <- "D:/SEU/科研/国省创/数据集/TcgaTargetGtex_rsem_gene_tpm/TcgaTargetGtex_rsem_gene_tpm.tsv"
-METADATA_PATH <- "D:/SEU/科研/国省创/数据集/TcgaTargetGTEX_phenotype.txt/TcgaTargetGTEX_phenotype.txt"
+TPM_DATA_PATH <- "Data_Source/TcgaTargetGtex_rsem_gene_tpm/TcgaTargetGtex_rsem_gene_tpm.tsv"
+METADATA_PATH <- "Data_Source/TcgaTargetGTEX_phenotype.txt/TcgaTargetGTEX_phenotype.txt"
 
 # ==============================================================================
 # 加载数据与预处理
