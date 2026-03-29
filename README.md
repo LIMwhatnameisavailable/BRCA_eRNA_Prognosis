@@ -3,7 +3,7 @@
 ## 📌 Project Overview
 This project identifies and validates a prognostic enhancer RNA (eRNA) signature for Breast Cancer (BRCA) using multi-omics data. The analysis pipeline seamlessly integrates differential expression analysis, LASSO-Cox modeling, GSEA pathway enrichment, multi-omics regulatory network construction (CNV, Mutation, Hi-C), drug sensitivity prediction, and rigorous quality control of normal-like references for further early-discrimination model.
 
-🌐 **Interactive Web Application:** 
+## 🌐 Interactive Web Application 
 To make our models accessible to clinicians and researchers without programming expertise, we have deployed a user-friendly online tool: eRNACare. You can upload your own eRNA expression profiles to get real-time diagnostic predictions without running any code.
 👉 **Access the Web App here:** https://limseu.shinyapps.io/ernacare/
 
