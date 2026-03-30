@@ -55,7 +55,7 @@ Large files must be downloaded manually and placed in the same directory.
 | `hg19ToHg38.over.chain.gz` | UCSC liftOver reference |
 | `loop_info.csv` | Hi-C loop data (GEO: GSE157381) |
 | `probeMap_illuminaMethyl450_hg19_GPL16304_TCGAlegacy` | Methylation 450k probe annotation |
-| `L1000_Result.csv` → place in `Results/Drug_Analysis/` | **L1000FWD** | Submit your gene signature at https://maayanlab.cloud/L1000FWD/ and export results |
+| `L1000_Result.csv` → place in `Results/Drug_Analysis/` | L1000FWD | Submit your gene signature at https://maayanlab.cloud/L1000FWD/ and export results |
 
 ---
 
