@@ -94,7 +94,7 @@ download the following files into it.
 ### Part II: Biological Mechanism & Regulatory Network
 * **Script 4:** `4_GSEA_for_Risk_Groups.R`
   * **Function:** Performs Gene Set Enrichment Analysis (GSEA) to uncover pathways driving the high-risk phenotype.
-* **Script 5:** `5_Comprehensive_Regulatory_Network_eRNA&TF&Gene.R`
+* **Script 5:** `5_Comprehensive_Regulatory_Network.R`
   * **Function:** Integrates WGS mutations, CNV, and Hi-C validated chromatin loops to map upstream TF hubs and downstream targets.
 
 ### Part III: Clinical Translation & Therapeutics
