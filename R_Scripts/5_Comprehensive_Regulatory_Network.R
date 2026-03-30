@@ -27,7 +27,7 @@ library(gridExtra)
 mRNA_path     <- "Data_Source/TCGA-BRCA.star_fpkm.tsv.gz"
 eRNA_path     <- "Data_Source/TCGA_RPKM_eRNA_300k_peaks_in_Super_enhancer_BRCA.csv"
 hic_file      <- "Data_Source/loop_info.csv"
-clinical_file <- "Data_Source/clinical_info.tsv"
+clinical_file <- "Data_Source/pcawg_donor_clinical_August2016_v9"
 xena_mut_file <- "Data_Source/PCAWG_WGS_mutations.tsv.gz"
 xena_cnv_file  <- "Data_Source/TCGA.BRCA.sampleMap_Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes.gz"
 xena_meth_file <- "Data_Source/TCGA.BRCA.sampleMap_HumanMethylation450.gz" 
