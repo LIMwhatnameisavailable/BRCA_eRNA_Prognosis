@@ -465,3 +465,8 @@ if (nrow(low_risk_top_pathway) > 0) {
     dev.off()
   }
 }
+
+if(!dir.exists("Results")) dir.create("Results")
+write.csv(expr_final, "Results/expr_final.csv", row.names = TRUE)
+write.csv(risk_data, "Results/risk_data.csv", row.names = FALSE)
+write.csv(all_genes_diff, "Results/all_genes_diff.csv", row.names = TRUE)
