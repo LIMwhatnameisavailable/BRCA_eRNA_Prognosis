@@ -100,10 +100,9 @@ download the following files into it.
 
 ### Part III: Clinical Translation & Therapeutics
 * **Script 6:** `6_Candidate_Drug&Immune_Analysis.R`
-  * **Function:** Conducts a comprehensive pharmacogenomic and immunological analysis to identify therapeutic vulnerabilities in high-risk patients. Key executions include:
-    * **Signature Reversal:** Extracts DEGs for web-based screening and visualizes compounds capable of reversing the high-risk transcriptional state.
-    * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values ( (using the pre-computed `DrugPredictions.csv`) to demonstrate high-risk patient resistance to standard chemotherapies.
-    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key genes.
+  * **Function:** Conducts a pharmacogenomic and immunological analysis to identify therapeutic vulnerabilities in high-risk patients. Key executions include:
+    * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values (using the pre-computed `DrugPredictions.csv`) to demonstrate high-risk patient resistance to standard chemotherapies.
+    * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance and key genes.
     * **Immune & Targeted Therapy:** Compares immune checkpoint expression across risk groups and identifies targeted drugs.
 
 ### Part IV: Early-Stage Discrimination & Quality Control
