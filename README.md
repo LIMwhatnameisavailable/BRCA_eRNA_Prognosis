@@ -56,6 +56,7 @@ Large files must be downloaded manually and placed in the same directory.
 | `loop_info.csv` | Hi-C loop data (GEO: GSE157381) |
 | `probeMap_illuminaMethyl450_hg19_GPL16304_TCGAlegacy` | Methylation 450k probe annotation |
 | `L1000_Result.csv` → place in `Results/Drug_Analysis/` | L1000FWD | Submit your gene signature at https://maayanlab.cloud/L1000FWD/ and export results |
+| `DrugPredictions.csv` → place in `Results/Drug_Analysis/`| Pre-computed IC50 drug sensitivity matrix generated via oncoPredict package |
 
 ---
 
@@ -101,7 +102,7 @@ download the following files into it.
 * **Script 6:** `6_Candidate_Drug&Immune_Analysis.R`
   * **Function:** Conducts a comprehensive pharmacogenomic and immunological analysis to identify therapeutic vulnerabilities in high-risk patients. Key executions include:
     * **Signature Reversal:** Extracts DEGs for web-based screening and visualizes compounds capable of reversing the high-risk transcriptional state.
-    * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values to demonstrate high-risk patient resistance to standard chemotherapies.
+    * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values ( (using the pre-computed `DrugPredictions.csv`) to demonstrate high-risk patient resistance to standard chemotherapies.
     * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key genes.
     * **Immune & Targeted Therapy:** Compares immune checkpoint expression across risk groups and identifies targeted drugs.
     * **Therapeutics Summary:** Automatically generates a consolidated table of top candidate drugs.
