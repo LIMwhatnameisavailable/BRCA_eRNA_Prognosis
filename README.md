@@ -105,7 +105,6 @@ download the following files into it.
     * **Therapy Resistance:** Evaluates GDSC-predicted IC50 values ( (using the pre-computed `DrugPredictions.csv`) to demonstrate high-risk patient resistance to standard chemotherapies.
     * **Resistance Mechanisms:** Performs Spearman correlation analysis between drug resistance (IC50) and 19 key genes.
     * **Immune & Targeted Therapy:** Compares immune checkpoint expression across risk groups and identifies targeted drugs.
-    * **Therapeutics Summary:** Automatically generates a consolidated table of top candidate drugs.
 
 ### Part IV: Early-Stage Discrimination & Quality Control
 * **Script 7:** `7_PCA_mRNA_with_eRNA_Tumor&Normal.R`
