@@ -28,6 +28,7 @@ library(ggpubr)
 library(patchwork)
 library(tidyr)
 library(grid)
+pred_ic50 <- read.csv("Results/Drug_Analysis/DrugPredictions.csv", row.names = 1)
 if(!exists("expr_final") | !exists("risk_data") | !exists("pred_ic50")) {
   stop("缺少必要数据！请先加载 expr_final, risk_data, pred_ic50")
 }
