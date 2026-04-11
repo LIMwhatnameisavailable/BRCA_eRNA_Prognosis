@@ -42,7 +42,6 @@ train_data <- train_data[order(train_data$risk_score), ]
 train_data$sample_order <- 1:nrow(train_data)  
 train_data$id <- rownames(train_data)
 
-
 median_sample_order <- median(train_data$sample_order)
 print(median_sample_order)
 
@@ -111,7 +110,6 @@ svg(filename = "Results/Fig_stratification_training.svg", width = 12, height = 8
 print(final_plot)
 dev.off()
 
-
 library(svglite)
 
 # Generate Kaplan-Meier survival curve for the training cohort
@@ -178,8 +176,6 @@ svg("Results/Fig_KM_training.svg", width = 12, height = 8)
 print(p) 
 dev.off()
 
-
-
 # Calculate risk scores for the testing cohort
 colnames(test_data) <- gsub(":", "_", colnames(test_data))
 colnames(test_data) <- gsub("/month", "_month", colnames(test_data))
@@ -190,7 +186,6 @@ test_data$risk_score <- (-0.12338077) * test_data[,"chr1_155158995"]+
   (-0.20987822) * test_data[,"chr9_114689796"]+( 0.21679753) * test_data[,"chr10_5531356"]+
   (-0.03772779) * test_data[,"chr9_71398939"]+( 0.35946524) * test_data[,"chr12_13371038"]+
   (0.06413942) * test_data[,"chr10_5528926"]
-
 median_risk_test <- median(test_data$risk_score,na.rm = TRUE) 
 print(median_risk_test)
 test_data$risk_group <- ifelse(test_data$risk_score > median_risk_test, "High", "Low") 
@@ -206,7 +201,6 @@ test_data$OS <- ifelse(
   test_data$OS
 )
 summary(test_data$OS.time_month)
-
 
 # Sort testing cohort samples by risk score
 test_data <- test_data[order(test_data$risk_score), ] 
@@ -273,7 +267,6 @@ final_plot_test <- plot_grid(
 svg(filename = "Results/Fig_stratification_testing.svg", width = 12, height = 8)
 print(final_plot_test)
 dev.off()
-
 
 # Generate Kaplan-Meier survival curve for the testing cohort
 test_data <- na.omit(test_data)
@@ -347,7 +340,6 @@ svg("Results/Fig_KM_testing.svg", width = 12, height = 8)
 print(p)
 dev.off()
 
-
 # Calculate risk scores for the combined cohort
 colnames(combined_data) <- gsub(":", "_", colnames(combined_data))
 colnames(combined_data) <- gsub("/month", "_month", colnames(combined_data))
@@ -358,7 +350,6 @@ combined_data$risk_score <- (-0.12338077) * combined_data[,"chr1_155158995"]+
   (-0.20987822) * combined_data[,"chr9_114689796"]+( 0.21679753) * combined_data[,"chr10_5531356"]+
   (-0.03772779) * combined_data[,"chr9_71398939"]+( 0.35946524) * combined_data[,"chr12_13371038"]+
   (0.06413942) * combined_data[,"chr10_5528926"]
-
 median_risk_combined <- median(combined_data$risk_score,na.rm = TRUE) 
 print(median_risk_combined)
 combined_data$risk_group <- ifelse(combined_data$risk_score > median_risk_combined, "High", "Low") 
@@ -499,7 +490,6 @@ p$table <- p$table +
       color = "white" 
     )
   )
-
 svg("Results/Fig_KM_combined.svg", width = 12, height = 8)
 print(p) 
 dev.off()
@@ -559,7 +549,6 @@ p_heatmap_combined <- Heatmap(
 svg(filename = "Results/Fig_10eRNA_heatmap_combined.svg", width = 12, height = 8)
 print(p_heatmap_combined)
 dev.off()
-
 
 # Perform time-dependent ROC analysis for the combined cohort
 library(timeROC)
