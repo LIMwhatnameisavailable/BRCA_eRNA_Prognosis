@@ -1,8 +1,8 @@
 coef.min <- coef(cvfit, s = "lambda.min")
 selected_eRNAs <- rownames(coef.min)[which(coef.min != 0)]
-print(selected_eRNAs)  #10selected_eRNA
+print(selected_eRNAs)  # 10 selected eRNAs
 
-#训练集
+# Calculate risk scores for the training cohort
 colnames(train_data) <- gsub(":", "_", colnames(train_data))
 colnames(train_data) <- gsub("/month", "_month", colnames(train_data))
 train_data$risk_score <- (-0.12338077) * train_data[,"chr1_155158995"]+
@@ -21,7 +21,8 @@ library(ComplexHeatmap)
 library(circlize)
 library(gridExtra)
 class(train_data$OS)
-#风险评分分布图 
+
+# Cap survival time at 150 months and update survival status
 train_data$OS.time_month <- ifelse(
   train_data$OS.time_month >= 150,
   150,
@@ -35,7 +36,8 @@ train_data$OS <- ifelse(
 train_data$risk_group <- ifelse(train_data$risk_score > median_risk, "High", "Low")
 
 train_data$status_factor <- train_data$OS
-#按风险评分排序样本
+
+# Sort samples by risk score and assign sample order
 train_data <- train_data[order(train_data$risk_score), ] 
 train_data$sample_order <- 1:nrow(train_data)  
 train_data$id <- rownames(train_data)
@@ -43,6 +45,8 @@ train_data$id <- rownames(train_data)
 
 median_sample_order <- median(train_data$sample_order)
 print(median_sample_order)
+
+# Generate risk score distribution plot
 p_risk <- ggplot(train_data, aes(x = sample_order, y = risk_score)) +
   geom_point(aes(color = risk_group), size = 2, alpha = 0.8) + 
   geom_hline(yintercept = median_risk, linetype = "dashed", color = "grey40") +
@@ -64,7 +68,9 @@ train_data$status_factor <- factor(
   levels = c(0, 1), 
   labels = c("Alive", "Dead")
 )
-p_time <- ggplot(train_data, aes(x = sample_order, y = OS.time_month/12)) +  #转换为年
+
+# Generate survival status scatter plot
+p_time <- ggplot(train_data, aes(x = sample_order, y = OS.time_month/12)) +  # Convert months to years
   geom_point(aes(shape = status_factor, color = status_factor), size = 2.5) +
   scale_color_manual(values = c("Alive" = "#1F77B4", "Dead" = "#D62728")) +
   scale_shape_manual(values = c(16, 16)) +
@@ -90,7 +96,8 @@ combined_plot <- plot_grid(
   axis = "lr",
   rel_heights = c(0.4, 0.6)
 )
-#添加统一标题
+
+# Assemble plots and add a unified title
 title <- ggdraw() + 
   draw_label("BRCA Prognostic Risk Stratification(Training Cohort)", 
              fontface = "bold", size = 14)
@@ -106,7 +113,8 @@ dev.off()
 
 
 library(svglite)
-#绘制训练集生存曲线
+
+# Generate Kaplan-Meier survival curve for the training cohort
 train_data <- na.omit(train_data)
 sur_fit <- survfit(Surv(OS.time_month, OS) ~ risk_group, data = train_data)
 table(train_data$risk_group)
@@ -148,7 +156,8 @@ p <- ggsurvplot(
       plot.title = element_text(hjust = 0.5)
     )
 )
-#调整风险表样式
+
+# Adjust risk table aesthetics
 p$table <- p$table + 
   theme(
     plot.title = element_text(size = 12, face = "bold"),
@@ -163,14 +172,15 @@ p$table <- p$table +
       color = "white" 
     )
   )
-#合并生存曲线与风险表
+
+# Export the combined survival curve and risk table
 svg("Results/Fig_KM_training.svg", width = 12, height = 8)
 print(p) 
 dev.off()
 
 
 
-#测试集检验
+# Calculate risk scores for the testing cohort
 colnames(test_data) <- gsub(":", "_", colnames(test_data))
 colnames(test_data) <- gsub("/month", "_month", colnames(test_data))
 
@@ -198,7 +208,7 @@ test_data$OS <- ifelse(
 summary(test_data$OS.time_month)
 
 
-#测试集
+# Sort testing cohort samples by risk score
 test_data <- test_data[order(test_data$risk_score), ] 
 test_data$sample_order <- 1:nrow(test_data) 
 median_sample_order <- median(test_data$sample_order)
@@ -249,7 +259,8 @@ combined_plot_test <- plot_grid(
   axis = "lr",
   rel_heights = c(0.4, 0.6)
 )
-#添加统一标题
+
+# Assemble plots and add a unified title
 title <- ggdraw() + 
   draw_label("BRCA Prognostic Risk Stratification(Testing Cohort)", 
              fontface = "bold", size = 14)
@@ -264,7 +275,7 @@ print(final_plot_test)
 dev.off()
 
 
-#绘制测试集生存曲线
+# Generate Kaplan-Meier survival curve for the testing cohort
 test_data <- na.omit(test_data)
 test_data$OS.time_month <- ifelse(
   test_data$OS.time_month >= 120,
@@ -316,7 +327,8 @@ p <- ggsurvplot(
       plot.title = element_text(hjust = 0.5)
     )
 )
-#调整风险表样式
+
+# Adjust risk table aesthetics
 p$table <- p$table + 
   theme(
     plot.title = element_text(size = 12, face = "bold"),
@@ -336,7 +348,7 @@ print(p)
 dev.off()
 
 
-#总体检验
+# Calculate risk scores for the combined cohort
 colnames(combined_data) <- gsub(":", "_", colnames(combined_data))
 colnames(combined_data) <- gsub("/month", "_month", colnames(combined_data))
 
@@ -363,7 +375,7 @@ combined_data$OS <- ifelse(
 )
 summary(combined_data$OS.time_month)
 
-#总集
+# Sort combined cohort samples by risk score
 combined_data <- combined_data[order(combined_data$risk_score), ] 
 combined_data$sample_order <- 1:nrow(combined_data) 
 median_sample_order <- median(combined_data$sample_order)
@@ -415,7 +427,8 @@ combined_plot_combined <- plot_grid(
   axis = "lr",
   rel_heights = c(0.4, 0.6)
 )
-#添加统一标题
+
+# Assemble plots and add a unified title
 title <- ggdraw() + 
   draw_label("BRCA Prognostic Risk Stratification(Combined Cohort)", 
              fontface = "bold", size = 14)
@@ -429,7 +442,7 @@ svg(filename = "Results/Fig_stratification_combined.svg", width = 12, height = 8
 print(final_plot_combined)
 dev.off()
 
-#绘制总体生存曲线
+# Generate Kaplan-Meier survival curve for the combined cohort
 combined_data <- na.omit(combined_data)
 sur_fit_combined <- survfit(Surv(OS.time_month, OS) ~ risk_group, data = combined_data)
 table(combined_data$risk_group)
@@ -472,7 +485,7 @@ p <- ggsurvplot(
     )
 )
 
-#调整风险表样式
+# Adjust risk table aesthetics
 p$table <- p$table + 
   theme(
     plot.title = element_text(size = 12, face = "bold"),
@@ -491,7 +504,7 @@ svg("Results/Fig_KM_combined.svg", width = 12, height = 8)
 print(p) 
 dev.off()
 
-# 总集热图
+# Generate expression heatmap for the combined cohort
 selected_genes <- c("chr1_155158995", "chr3_11236700", "chr8_22624675","chr3_138070534","chr9_71398719",
                     "chr9_114689796","chr10_5531356","chr9_71398939","chr12_13371038","chr10_5528926") 
 expr_matrix_combined <- t(scale((combined_data[, selected_genes]), center = TRUE, scale = TRUE))
@@ -548,7 +561,7 @@ print(p_heatmap_combined)
 dev.off()
 
 
-# 总集ROC
+# Perform time-dependent ROC analysis for the combined cohort
 library(timeROC)
 library(ggplot2)
 roc_res <- timeROC(
