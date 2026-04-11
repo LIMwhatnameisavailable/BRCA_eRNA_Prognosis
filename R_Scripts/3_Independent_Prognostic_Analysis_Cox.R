@@ -23,7 +23,7 @@ prepare_cox_data <- function(data_subset, clinical_ref) {
   return(final_data)
 }
 
-# 执行 Cox 回归并生成表格
+# Perform Cox regression analysis and generate results table
 run_cox_analysis <- function(data, cohort_name) {
   covariates <- c(
     "Age" = "age",
@@ -36,7 +36,7 @@ run_cox_analysis <- function(data, cohort_name) {
   
   res_df <- data.frame()
   
-  # 多因素模型
+  # Multivariate model
   multi_form <- as.formula(paste("Surv(OS.time_month, OS) ~", paste(unname(covariates), collapse = "+")))
   multi_fit <- coxph(multi_form, data = data)
   multi_sum <- summary(multi_fit)
@@ -44,7 +44,7 @@ run_cox_analysis <- function(data, cohort_name) {
   for(label in names(covariates)) {
     var <- covariates[[label]]
     
-    # 单因素
+    # Univariate analysis
     uni_fit <- coxph(as.formula(paste("Surv(OS.time_month, OS) ~", var)), data = data)
     uni_sum <- summary(uni_fit)
     uni_hr <- sprintf("%.3f", uni_sum$conf.int[1])
@@ -52,7 +52,7 @@ run_cox_analysis <- function(data, cohort_name) {
     uni_p <- uni_sum$coefficients[5]
     uni_p_str <- ifelse(uni_p < 0.001, "< 0.001", sprintf("%.3f", uni_p))
     
-    # 多因素
+    # Multivariate analysis
     target_row <- grep(var, rownames(multi_sum$coefficients))[1]
     if(!is.na(target_row)) {
       multi_hr_val <- multi_sum$conf.int[target_row, 1]
@@ -89,22 +89,22 @@ clinical_ref <- data_clinical %>%
   mutate(patient_id = substr(patient_id, 1, 12)) %>%
   distinct(patient_id, .keep_all = TRUE)
 
-# 处理训练集
+# Process training cohort
 cutoff_score <- median(train_data$risk_score)
 train_data$risk_group <- ifelse(train_data$risk_score > cutoff_score, "High", "Low")
 
-# 清洗与合并
+# Data cleaning and merging
 cox_train_data <- prepare_cox_data(train_data, clinical_ref)
 cat("训练集纳入样本数:", nrow(cox_train_data), " (死亡事件:", sum(cox_train_data$OS==1), ")\n")
 
-# 生成表格
+# Generate table
 table_train <- run_cox_analysis(cox_train_data, "Training Cohort")
 print("========= 训练集 Cox 回归表 =========")
 print(table_train)
 write.csv(table_train, "Results/Table2_Training_Cox.csv", row.names = FALSE)
 
 
-# 处理测试集
+# Process testing cohort
 test_cutoff <- median(test_data$risk_score)
 test_data$risk_group <- ifelse(test_data$risk_score > test_cutoff, "High", "Low")
 cox_test_data <- prepare_cox_data(test_data, clinical_ref)
@@ -119,32 +119,31 @@ if(sum(cox_test_data$OS==1) >= 10) {
 }
 
 
-cat("\n\n========== 提取 Shiny 部署所需的核心参数 ==========\n")
-# 1. 在训练集上拟合最终的多因素 Cox 模型
+# Extract core parameters for Shiny application deployment
+# Fit final multivariate Cox model on training cohort
 final_cox_model <- coxph(
   Surv(OS.time_month, OS) ~ age + T_stage_num + N_stage_num + M_stage_num + risk_group, 
   data = cox_train_data
 )
 
-# 2. 打印 Beta 系数 (用于计算 Linear Predictor)
+# Output Beta coefficients for linear predictor calculation
 cat("\n[1] Beta 系数 (Coefficients):\n")
 print(coef(final_cox_model))
 
-# 3. 打印变量均值 (用于对新患者数据进行中心化)
+# Output variable means for centering new patient data
 cat("\n[2] 变量均值 (Means for centering):\n")
 print(final_cox_model$means)
 
-# 4. 提取 1年(12个月)、3年(36个月)、5年(60个月) 的基线生存率 S0(t)
-cat("\n[3] 特定时间点的基线生存率 S0(t):\n")
+# Extract baseline survival rates S0(t) at 1, 3, and 5 years
 bh <- basehaz(final_cox_model, centered = TRUE)
-target_times <- c(12, 36, 60) # 假设 OS.time_month 的单位是月
+target_times <- c(12, 36, 60) # Assuming OS.time_month is measured in months
 
 for(t in target_times) {
-  # 寻找最接近目标时间的点
+  # Identify the closest matching time point
   closest_idx <- which.min(abs(bh$time - t))
   closest_time <- bh$time[closest_idx]
   cumulative_hazard <- bh$hazard[closest_idx]
-  s0_t <- exp(-cumulative_hazard) # 基线生存率 = exp(-累积风险)
+  s0_t <- exp(-cumulative_hazard) # Baseline survival rate calculation
   
   cat(sprintf("目标时间 %d 个月 (实际匹配 %.1f 个月): 累积风险 H0 = %.5f, 基线生存率 S0 = %.5f\n", 
               t, closest_time, cumulative_hazard, s0_t))
