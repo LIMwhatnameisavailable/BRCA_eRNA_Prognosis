@@ -6,7 +6,6 @@ library(tibble)
 
 # Set random seed
 set.seed(42) 
-
 if(!dir.exists("Results_QC")) dir.create("Results_QC")
 
 # Global paths and variables
@@ -17,8 +16,6 @@ TPM_DATA_PATH <- "Data_Source/TcgaTargetGtex_rsem_gene_tpm/TcgaTargetGtex_rsem_g
 METADATA_PATH <- "Data_Source/TcgaTargetGTEX_phenotype.txt/TcgaTargetGTEX_phenotype.txt"
 
 # Data loading and preprocessing
-message(">>> 开始加载数据...")
-
 if (file.exists(METADATA_PATH)) {
   phenotype <- fread(METADATA_PATH, data.table = FALSE)
   message("  - 元数据加载完成。")
@@ -46,7 +43,6 @@ target_samples <- phenotype %>%
     (`_sample_type` %in% c("Primary Tumor", "Solid Tissue Normal") & grepl("^TCGA", sample)) |
       (grepl("^GTEX", sample))
   )
-
 if (nrow(target_samples) == 0) stop("未找到符合条件的样本，请检查筛选条件。")
 
 # Align data via intersection
@@ -60,8 +56,6 @@ meta_final <- target_samples %>%
   arrange(match(sample, common_samples)) 
 
 # Filter normal-like samples via Spearman correlation
-message(">>> 正在构建 GTEx 标准参考谱并计算相关性...")
-
 gtex_samples <- meta_final$sample[grepl("^GTEX", meta_final$sample)]
 gtex_mean_profile <- rowMeans(expr_final[, gtex_samples], na.rm = TRUE)
 
@@ -98,8 +92,6 @@ message(stats_msg)
 normal_like_samples <- meta_final %>% filter(sample %in% kept_ids)
 
 # Export results
-message(">>> 正在导出筛选结果...")
-
 export_df <- cor_df %>%
   filter(sample %in% kept_ids) %>%
   arrange(desc(correlation)) %>%
@@ -108,14 +100,11 @@ export_df <- cor_df %>%
 write.csv(export_df, 
           file = paste0("Results_QC/Selected_Normal_Samples_", CANCER_CODE, ".csv"), 
           row.names = FALSE, quote = FALSE)
-
 write.table(kept_ids, 
             file = paste0("Results_QC/Selected_Normal_Samples_ID_Only_", CANCER_CODE, ".txt"), 
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
 # Generate validation plots
-message(">>> 正在绘制验证图...")
-
 # Prepare tumor data for comparison
 tumor_samples <- meta_final$sample[meta_final$`_sample_type` == "Primary Tumor"]
 
@@ -124,7 +113,6 @@ if(length(tumor_samples) > 500) {
 } else {
   plot_tumor_ids <- tumor_samples
 }
-
 tumor_mat <- expr_final[, plot_tumor_ids]
 tumor_cor <- cor(tumor_mat, gtex_mean_profile, method = "spearman", use = "pairwise.complete.obs")
 
@@ -143,7 +131,6 @@ box_colors <- c(
   "Rejected Adjacent" = "gray30",
   "TCGA Tumor" = "#E63946"         
 )
-
 p_valid <- ggplot(plot_data, aes(x = Group, y = Correlation, fill = Group)) +
   geom_boxplot(alpha = 0.8, outlier.shape = NA, width = 0.5) +
   geom_jitter(width = 0.2, size = 1, color="#B0B0B0", alpha=0.2) +
