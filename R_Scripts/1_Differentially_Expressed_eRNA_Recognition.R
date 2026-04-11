@@ -6,7 +6,7 @@ library(survival)
 library(survminer)
 library(ggrastr)
 
-#处理data文件的列名为TCGA标准格式,行名设为eRNA名
+# Format column names to TCGA standard and set row names to eRNA names
 original_col <- colnames(data)
 new_col <- ifelse(
   grepl("_tumor", original_col), gsub("_tumor", "-01A", original_col),
@@ -15,7 +15,8 @@ new_col <- ifelse(
     original_col)
 )
 colnames(data) <- new_col
-#预定义肿瘤组和正常对照组
+
+# Predefine tumor and normal control groups
 tumor_col <- colnames(data)[which(substr(colnames(data),14,14) == 0)]
 length(tumor_col)
 normal_col <- colnames(data)[which(substr(colnames(data),14,14) == 1)]
@@ -24,12 +25,12 @@ data <- as.data.frame(data)
 rownames(data) <- data[, 1]
 data <- data[, -1]
 
-#读取生存数据和临床数据
+# Load survival and clinical data
 library(readxl)
 survival <- read.delim("Data_Source/TCGA-BRCA.survival.tsv", fileEncoding = "UTF-16")
 clinical <- fread("Data_Source/TCGA-BRCA.clinical.tsv")
 
-#对同时存在正常样本和肿瘤样本的病人去重（1076patients）
+# Deduplicate patients with both normal and tumor samples (1076 patients)
 survival <- unique(survival[,c("X_PATIENT","OS.time","OS")]) 
 survival <- as.data.frame(survival)  
 rownames(survival) <- survival[, 1]
@@ -37,22 +38,24 @@ survival <- survival[, -1]
 clinical <- as.data.frame(clinical) 
 rownames(clinical) <- clinical[, 1]
 clinical <- clinical[, -1]
-#将生存天数转换为月，保留两位小数
+
+# Convert survival days to months and round to two decimal places
 survival$OS.time <- round(as.numeric(survival$OS.time)/30,2) 
 colnames(survival)[1] <- "OS.time/month"
 survival$OS <- as.numeric(survival$OS) 
 
-#定义样品分组并构建设计矩阵
+# Define sample groups and construct design matrix
 group <- rep("normal", ncol(data)) 
 group[colnames(data) %in% tumor_col] <- "tumor"
 table(group)
 group <- factor(group)
 design <- model.matrix(~0 + group)
-#设计矩阵列名为tumor/normal，行名为samples
+
+# Set design matrix column names to tumor/normal and row names to samples
 colnames(design) <- levels(group)
 rownames(design) <- colnames(data)
 
-#划分训练集和测试集
+# Split data into training and testing cohorts
 library(caret)
 set.seed(123)
 survival <- as.data.frame(survival)
@@ -67,7 +70,8 @@ train_cohort <- survival[train_index, ]
 test_cohort <- survival[-train_index, ]
 cat("Number of Training Cohort:", nrow(train_cohort), "\n",
     "Number of Testing Cohort:", nrow(test_cohort))
-#计算两组平均生存时间并进行检验
+
+# Calculate and test mean survival time between cohorts
 train_mean <- mean(train_cohort$`OS.time/month`, na.rm = TRUE)
 test_mean <- mean(test_cohort$`OS.time/month`, na.rm = TRUE)
 t_test <- t.test(train_cohort$`OS.time/month`, test_cohort$`OS.time/month`)
@@ -75,23 +79,25 @@ cat("Median OStime of Training Cohort:", round(train_mean, 2), "month\n",
     "Median OStime of Testing Cohort:", round(test_mean, 2), "month\n",
     "p Value:", format.pval(t_test$p.value, digits = 3))
 
-#去除低表达的eRNA
+# Filter out lowly expressed eRNAs
 library(limma)
 keep <- rowSums(data >= 0.3) >= 500  
 data.filtered <- data[keep, ]
 cat("Original:", nrow(data), "\nFiltered:",nrow(data.filtered))
-#log2分布优化
+
+# Optimize distribution via log2 transformation
 data.filtered <- log2(data.filtered + 1)
 
-#差异表达分析
+# Perform differential expression analysis
 fit <- lmFit(data.filtered,design)
 contrast.matrix <- makeContrasts(tumor_vs_normal = tumor-normal,levels = design)
 fit2 <- contrasts.fit(fit, contrast.matrix)
 
-#通过经验贝叶斯方法调整方差
+# Adjust variances using empirical Bayes method
 fit2 <- eBayes(fit2)
 results <- topTable(fit2,coef = "tumor_vs_normal",number = Inf,adjust.method = "BH")
-#筛选上调/下调的eRNA
+
+# Filter upregulated and downregulated eRNAs
 DEE <- results[results$adj.P.Val < 0.001 & abs(results$logFC) > 0.8,]
 dim(DEE)
 DEE.up <- results[results$adj.P.Val<0.001 & results$logFC > 0.8,] 
@@ -108,7 +114,8 @@ results$diff <- ifelse(
 library(ggplot2)
 library(ggview)
 library(ggrepel)
-#绘制火山图
+
+# Generate volcano plot
 volcano <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), 
                                color = factor(diff,levels = c("Up","Down","NotSig")))) +
   ggrastr::geom_point_rast(alpha = 0.6, size = 1.5) +
@@ -198,18 +205,18 @@ draw(ht_plot)
 dev.off()
 
 
-#筛选同时有表达数据和生存数据的samples
+# Filter samples with both expression and survival data
 head(tumor_col)
 head(DEE)
 head(data.filtered)
 rownames(DEE) <- gsub(":", "_", rownames(DEE))
 data.filtered.tumor <- data.filtered[rownames(DEE),tumor_col]
-colnames(data.filtered.tumor) <- substr(colnames(data.filtered.tumor),1,12)  #标准化格式
+colnames(data.filtered.tumor) <- substr(colnames(data.filtered.tumor),1,12)  # Standardize format
 combined_data <- survival
 overlap.samples <- intersect(rownames(train_cohort),colnames(data.filtered.tumor))
 overlap.samples_combined <- intersect(rownames(combined_data),colnames(data.filtered.tumor))
 length(overlap.samples)  
-length(overlap.samples_combined) #1073samples,753train
+length(overlap.samples_combined) # 1073 samples, 753 in training set
 survival.addExp <- cbind(train_cohort[overlap.samples,],
                          t(data.filtered.tumor)[overlap.samples,]) 
 train_data <- survival.addExp[,c("OS.time/month", "OS", rownames(DEE))]
@@ -222,7 +229,7 @@ combined_data <- cbind(survival[overlap.samples_combined,],
                        t(data.filtered.tumor)[overlap.samples_combined,])
 combined_data <- combined_data[,c("OS.time/month", "OS", rownames(DEE))]
 
-#单变量Cox回归分析
+# Perform univariate Cox regression analysis
 library(stringr)
 univ_results <- data.frame()
 colnames(train_data) <- gsub(":", "_", colnames(train_data))
@@ -245,17 +252,17 @@ for(eRNA in rownames(DEE)){
 univ_results <- univ_results %>% arrange(p.value)
 cat("单变量Cox回归完成。\n")
 
-# 筛选数据并修复 eRNA 名
+# Filter data and format eRNA names
 sig_eRNAs_data <- univ_results %>% 
   filter(p.value < 0.01) %>%
   mutate(eRNA_label = str_replace(eRNA, "_", ":")) %>%
   
-  # 根据HR值是大于1还是小于1，创建新的分组列
+  # Create grouping column based on HR values
   mutate(EffectGroup = ifelse(HR > 1, 
                               "Risk (P<0.01)", 
                               "Protective (P<0.01)")) %>%
   
-  # 按照HR排序
+  # Sort by HR
   arrange(HR) %>%
   mutate(row_id = row_number()) %>%
   mutate(stripe_group = factor(row_id %% 2)) %>%
@@ -268,12 +275,12 @@ forest_plot <- ggplot(sig_eRNAs_data, aes(x = HR, y = eRNA_label)) +
     aes(ymin = as.numeric(eRNA_label) - 0.5, 
         ymax = as.numeric(eRNA_label) + 0.5,
         xmin = 0.3, xmax = 2.1, 
-        fill = stripe_group), # 使用我们创建的 0/1 分组来填充
-    color = NA # 矩形没有边框
+        fill = stripe_group), # Fill using the created binary grouping
+    color = NA # Remove rectangle borders
   ) +
   scale_fill_manual(
     values = c("0" = "white", "1" = "grey95"),
-    guide = "none" # 不显示这个图例
+    guide = "none" # Hide legend
   ) +
   geom_errorbarh(aes(xmin = Lower_95CI, xmax = Upper_95CI), 
                  height = 0.25,      
@@ -326,7 +333,7 @@ ggsave(
 )
 
 
-#LASSO回归
+# Perform LASSO regression
 library(glmnet)
 library(ggsci) 
 library(reshape2) 
@@ -335,10 +342,10 @@ sig_eRNAs <- sig_eRNAs_data$eRNA
 x <- as.matrix(train_data[, sig_eRNAs])
 y <- Surv(train_data$OS.time_month, train_data$OS) 
 
-#拟合LASSO模型
+# Fit LASSO model
 fit <- glmnet(x, y, family = "cox", alpha = 1, nlamdba = 300)
 
-#绘制交叉验证误差曲线
+# Plot cross-validation error curve
 set.seed(123)
 cvfit <- cv.glmnet(x, y, family = "cox", alpha = 1, 
                    nfolds = 10,  
@@ -349,7 +356,7 @@ coef_path <- as.matrix(fit$beta)
 melt_coef <- melt(coef_path, varnames = c("Predictor", "Step"), value.name = "Coefficient")
 melt_coef$Lambda <- rep(fit$lambda, each = nrow(coef_path))
 
-# 动态获取颜色
+# Dynamically assign colors
 n_predictors <- nrow(coef_path)     
 npg_palette <- pal_npg()(10)       
 my_colors <- rep(npg_palette, length.out = n_predictors) 
@@ -368,7 +375,7 @@ my_colors <- rep(npg_palette, length.out = n_predictors)
     theme_bw(base_size = 12) +
     theme(
       panel.grid.minor = element_blank(),
-      legend.position = "none",  #隐藏图例
+      legend.position = "none",  # Hide legend
       plot.title = element_text(hjust = 0.5, face = "bold"),
       axis.title = element_text(color = "black", size = 11)
     ))
@@ -406,21 +413,21 @@ ggsave(
 )
 
             
-# 绘制临床信息分组统计表 (Table 1)
+# Generate clinical characteristics summary table
 library(gtsummary)
 library(flextable)
-library(forcats) #
+library(forcats) 
 
-# 获取 1073 个目标样本的 ID
+# Extract IDs for the 1073 target samples
 train_patients <- overlap.samples
 test_patients <- overlap_test.samples
 
-# 处理临床数据并去重
+# Process and deduplicate clinical data
 clinical_df <- clinical
 clinical_df$Patient_ID <- substr(rownames(clinical_df), 1, 12)
 clinical_df <- clinical_df[!duplicated(clinical_df$Patient_ID), ]
 
-# 筛选出这 1073 个样本并打上标签
+# Filter target samples and assign cohort labels
 clinical_filtered <- clinical_df[clinical_df$Patient_ID %in% c(train_patients, test_patients), ]
 clinical_filtered$Cohort <- ifelse(clinical_filtered$Patient_ID %in% train_patients, 
                                    "Training Cohort", 
@@ -439,17 +446,17 @@ clinical_ready <- clinical_filtered %>%
   mutate(
     Age = as.numeric(Age),
     
-    # 精准清洗 Stage，保留 Stage X，真正的空值设为 NA
+    # Clean Stage variable retaining Stage X and setting blanks to NA
     Stage = case_when(
       Stage %in% c("Stage I", "Stage IA", "Stage IB") ~ "Stage I",
       Stage %in% c("Stage II", "Stage IIA", "Stage IIB") ~ "Stage II",
       Stage %in% c("Stage III", "Stage IIIA", "Stage IIIB", "Stage IIIC") ~ "Stage III",
       Stage %in% c("Stage IV") ~ "Stage IV",
       Stage == "Stage X" ~ "Stage X",
-      TRUE ~ NA_character_ # 其余空字符串全部变为 NA，后续会被隐藏
+      TRUE ~ NA_character_ # Convert remaining empty strings to NA
     ),
     
-    # 精准清洗 T 分期，保留 TX
+    # Clean T classification retaining TX
     T_classification = case_when(
       T_classification %in% c("T1", "T1a", "T1b", "T1c") ~ "T1",
       T_classification %in% c("T2", "T2a", "T2b") ~ "T2",
@@ -459,7 +466,7 @@ clinical_ready <- clinical_filtered %>%
       TRUE ~ NA_character_
     ),
     
-    # 精准清洗 N 分期，保留 NX
+    # Clean N classification retaining NX
     N_classification = case_when(
       N_classification %in% c("N0", "N0 (i-)", "N0 (i+)", "N0 (mol+)") ~ "N0",
       N_classification %in% c("N1", "N1a", "N1b", "N1c", "N1mi") ~ "N1",
@@ -469,7 +476,7 @@ clinical_ready <- clinical_filtered %>%
       TRUE ~ NA_character_
     ),
     
-    # 精准清洗 M 分期，保留 MX
+    # Clean M classification retaining MX
     M_classification = case_when(
       M_classification %in% c("M0", "cM0 (i+)") ~ "M0",
       M_classification %in% c("M1") ~ "M1",
@@ -477,11 +484,11 @@ clinical_ready <- clinical_filtered %>%
       TRUE ~ NA_character_
     ),
     
-    # 处理 Primary diagnosis：把空字符串变 NA
+    # Convert empty strings in Primary diagnosis to NA
     Primary_diagnosis = na_if(Primary_diagnosis, "")
   ) %>%
   mutate(
-    # 转换为因子，fct_drop 会自动删掉所有计数为 0 的分类（不留空行）
+    # Convert to factors and drop unused levels
     Stage = fct_drop(factor(Stage, levels = c("Stage I", "Stage II", "Stage III", "Stage IV", "Stage X"))),
     T_classification = fct_drop(factor(T_classification, levels = c("T1", "T2", "T3", "T4", "TX"))),
     N_classification = fct_drop(factor(N_classification, levels = c("N0", "N1", "N2", "N3", "NX"))),
@@ -490,7 +497,7 @@ clinical_ready <- clinical_filtered %>%
     Primary_diagnosis = fct_lump_n(Primary_diagnosis, n = 3, other_level = "Other")
   )
 
-# 生成 Table 1
+# Generate Table 1
 theme_gtsummary_journal(journal = "jama")
 
 table1 <- clinical_ready %>%
@@ -512,10 +519,10 @@ table1 <- clinical_ready %>%
   modify_header(label ~ "**Variables**") %>% 
   bold_labels() 
 
-# 打印预览
+# Print preview
 print(table1)
 
-# 导出为 Word 文档
+# Export to Word document
 table1 %>% 
   as_flex_table() %>% 
   flextable::save_as_docx(path = "Results/Table1_Clinical_Characteristics.docx")
