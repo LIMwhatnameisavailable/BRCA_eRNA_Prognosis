@@ -1,10 +1,29 @@
 library(data.table)
-data <- fread("Data_Source/TCGA_RPKM_eRNA_300k_peaks_in_Super_enhancer_BRCA.csv")
-data_clinical <- fread("Data_Source/TCGA-BRCA.clinical.tsv")
-data_gene <- fread("Data_Source/TCGA-BRCA.methylation27.tsv")
 library(survival) 
 library(survminer)
 library(ggrastr)
+library(readxl)
+library(caret)
+library(limma)
+library(ggplot2)
+library(ggview)
+library(ggrepel)
+library(ComplexHeatmap)
+library(circlize) 
+library(dplyr)  
+library(stringr)
+library(glmnet)
+library(ggsci) 
+library(reshape2) 
+library(patchwork) 
+library(gtsummary)
+library(flextable)
+library(forcats) 
+
+# Load raw data
+data <- fread("Data_Source/TCGA_RPKM_eRNA_300k_peaks_in_Super_enhancer_BRCA.csv")
+data_clinical <- fread("Data_Source/TCGA-BRCA.clinical.tsv")
+data_gene <- fread("Data_Source/TCGA-BRCA.methylation27.tsv")
 
 # Format column names to TCGA standard and set row names to eRNA names
 original_col <- colnames(data)
@@ -26,7 +45,6 @@ rownames(data) <- data[, 1]
 data <- data[, -1]
 
 # Load survival and clinical data
-library(readxl)
 survival <- read.delim("Data_Source/TCGA-BRCA.survival.tsv", fileEncoding = "UTF-16")
 clinical <- fread("Data_Source/TCGA-BRCA.clinical.tsv")
 
@@ -56,7 +74,6 @@ colnames(design) <- levels(group)
 rownames(design) <- colnames(data)
 
 # Split data into training and testing cohorts
-library(caret)
 set.seed(123)
 survival <- as.data.frame(survival)
 train_index <- createDataPartition(
@@ -80,7 +97,6 @@ cat("Median OStime of Training Cohort:", round(train_mean, 2), "month\n",
     "p Value:", format.pval(t_test$p.value, digits = 3))
 
 # Filter out lowly expressed eRNAs
-library(limma)
 keep <- rowSums(data >= 0.3) >= 500  
 data.filtered <- data[keep, ]
 cat("Original:", nrow(data), "\nFiltered:",nrow(data.filtered))
@@ -111,10 +127,6 @@ results$diff <- ifelse(
   "NotSig"
 )
 
-library(ggplot2)
-library(ggview)
-library(ggrepel)
-
 # Generate volcano plot
 volcano <- ggplot(results, aes(x = logFC, y = -log10(adj.P.Val), 
                                color = factor(diff,levels = c("Up","Down","NotSig")))) +
@@ -143,11 +155,7 @@ ggsave(
   height = 6,            
 )
 
-
-library(ComplexHeatmap)
-library(circlize) 
-library(dplyr)  
-
+# Prepare data for heatmap visualization
 rownames(data.filtered) <- gsub(":", "_", rownames(data.filtered))
 rownames(DEE.up) <- gsub(":", "_", rownames(DEE.up))
 rownames(DEE.down) <- gsub(":", "_", rownames(DEE.down))
@@ -204,7 +212,6 @@ svg("Results/Fig_Heatmap.svg", width = 8, height = 7)
 draw(ht_plot) 
 dev.off()
 
-
 # Filter samples with both expression and survival data
 head(tumor_col)
 head(DEE)
@@ -230,7 +237,6 @@ combined_data <- cbind(survival[overlap.samples_combined,],
 combined_data <- combined_data[,c("OS.time/month", "OS", rownames(DEE))]
 
 # Perform univariate Cox regression analysis
-library(stringr)
 univ_results <- data.frame()
 colnames(train_data) <- gsub(":", "_", colnames(train_data))
 colnames(train_data) <- gsub("/month", "_month", colnames(train_data))
@@ -310,7 +316,6 @@ forest_plot <- ggplot(sig_eRNAs_data, aes(x = HR, y = eRNA_label)) +
     x = "Hazard Ratio (HR) with 95% CI",
     y = NULL  
   ) +
-  
   theme_classic() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
@@ -332,12 +337,7 @@ ggsave(
   height = 7, 
 )
 
-
 # Perform LASSO regression
-library(glmnet)
-library(ggsci) 
-library(reshape2) 
-library(patchwork) 
 sig_eRNAs <- sig_eRNAs_data$eRNA
 x <- as.matrix(train_data[, sig_eRNAs])
 y <- Surv(train_data$OS.time_month, train_data$OS) 
@@ -350,7 +350,6 @@ set.seed(123)
 cvfit <- cv.glmnet(x, y, family = "cox", alpha = 1, 
                    nfolds = 10,  
                    type.measure = "deviance") 
-
 
 coef_path <- as.matrix(fit$beta)
 melt_coef <- melt(coef_path, varnames = c("Predictor", "Step"), value.name = "Coefficient")
@@ -411,13 +410,8 @@ ggsave(
   width = 7,  
   height = 8, 
 )
-
             
 # Generate clinical characteristics summary table
-library(gtsummary)
-library(flextable)
-library(forcats) 
-
 # Extract IDs for the 1073 target samples
 train_patients <- overlap.samples
 test_patients <- overlap_test.samples
@@ -499,7 +493,6 @@ clinical_ready <- clinical_filtered %>%
 
 # Generate Table 1
 theme_gtsummary_journal(journal = "jama")
-
 table1 <- clinical_ready %>%
   tbl_summary(
     by = Cohort, 
